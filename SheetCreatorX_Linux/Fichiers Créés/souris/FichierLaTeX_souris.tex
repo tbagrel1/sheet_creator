@@ -1,0 +1,81 @@
+\documentclass[a4paper, 12pt,oneside, fleqn]{article}
+
+% Import des packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[frenchb]{babel}
+\usepackage{tabulary}
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{frcursive}
+\usepackage{collcell}
+\usepackage{bookman}
+
+% Debut du document
+\begin{document}
+
+% Creationdes nouvelles commandes
+\newcommand{\x}{\times}
+\newcolumntype{h}{>{\Large\bfseries\arraybackslash}C}
+\newcolumntype{g}{>{\Large\collectcell\MakeUppercase}h<{\endcollectcell}}
+\newcolumntype{i}{>{\Large\cursive}h}
+\renewcommand{\arraystretch}{1.5}
+
+% Parametres du document
+\sloppy
+\pagestyle{empty}
+\begin{onehalfspace}
+
+% Corps du document
+
+    % En-tete :
+\sffamily \noindent \Large Pr\'enom : \fbox{\begin{minipage}{9cm} \vspace{1.2cm}\hspace{9cm} \end{minipage}} \hspace{1.5cm}\Large Date :\vspace{2mm}\\
+\begin{minipage}{12cm}
+\begin{center}
+\Large\textbf{Langage \'ecrit - Le mot \MakeUppercase{souris}}
+\end{center}
+\normalsize Nous avons d\'ecouvert puis appris \`a m\'emoriser le mot\\
+\MakeUppercase{souris}\\
+Nous pouvons le retrouver dans une liste de mots : \end{minipage}\\
+\vspace{0.25cm}\\
+ 
+    % Tableaux : 
+        % Capitale
+\large\noindent En capitale :
+\begin{center}
+{\Huge \textbf{\MakeUppercase{souris}}}
+\vspace{1cm}\\
+\begin{tabulary}{19.5cm}{|g|g|g|g|}
+\hline
+inquiet & tri & boucher & souris\\
+\hline
+poulain & mesurer & écrire & briller \\
+\hline
+prise & sonner & réussir & sol\\
+\hline
+surface & fouiller & tourner & souris \\
+\hline
+coude & rat & souris & sortir\\
+\hline
+dicter & coup & souris & roulotte\\
+\hline
+pleurer & blouse & boutique & souris\\
+\hline
+muscle & entrain & journal & rater\\
+\hline
+concours & courrier & ours & souris\\
+\hline
+malgré & peinture & souris & patrie \\
+\hline
+souris & rictus & frange & riz\\
+\hline
+oie & sourire & poisson & triste\\
+\hline
+\end{tabulary}
+\end{center}
+\vspace{0.5cm}
+
+% Fin du document
+\end{onehalfspace}
+\end{document}

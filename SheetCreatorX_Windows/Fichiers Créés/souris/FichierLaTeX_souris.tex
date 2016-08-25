@@ -1,0 +1,107 @@
+\documentclass[a4paper, 11pt,oneside, fleqn]{article}
+
+% Import des packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[frenchb]{babel}
+\usepackage{tabulary}
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=1cm]{geometry}
+\usepackage{setspace}
+\usepackage{hyperref}
+\usepackage{frcursive}
+\usepackage{collcell}
+\usepackage{bookman}
+
+% Debut du document
+\begin{document}
+
+% Creationdes nouvelles commandes
+\newcommand{\x}{\times}
+\newcolumntype{h}{>{\Large\bfseries\arraybackslash}C}
+\newcolumntype{g}{>{\large\collectcell\MakeUppercase}h<{\endcollectcell}}
+\newcolumntype{i}{>{\Large\cursive}h}
+\renewcommand{\arraystretch}{1.5}
+
+% Parametres du document
+\sloppy
+\pagestyle{empty}
+\begin{onehalfspace}
+
+% Corps du document
+
+    % En-tete :
+\sffamily \noindent \Large Pr\'enom : \fbox{\begin{minipage}{9cm} \vspace{1.2cm}\hspace{9cm} \end{minipage}} \hspace{1.5cm}\Large Date :\vspace{2mm}\\
+\begin{minipage}{12cm}
+\begin{center}
+\Large\textbf{Langage \'ecrit - Le mot \MakeUppercase{souris}}
+\end{center}
+\normalsize Nous avons d\'ecouvert puis appris \`a m\'emoriser le mot\\
+\MakeUppercase{souris}\\
+Nous pouvons le retrouver dans une liste de mots : \end{minipage}\\
+\vspace{0.25cm}\\
+ 
+    % Tableaux : 
+        % Capitale
+\large\noindent En capitale :
+\begin{center}
+{\huge \textbf{\MakeUppercase{souris}}}
+\vspace{0.25cm}\\
+\begin{tabulary}{17cm}{|g|g|g|g|g|}
+\hline
+souiller & souffrir & jouer & souris & alentours \\
+\hline
+souvent & souhait & varier & son & souper \\
+\hline
+lecture & compagne & horrible & souris & soulever \\
+\hline
+souvent & brochure & serrure & souci & coupe \\
+\hline
+sacré & fabrique & chariot & souris & muraille \\
+\hline
+\end{tabulary}
+\end{center}
+\vspace{0.5cm}
+
+        % Script
+\large\noindent En script :
+\begin{center} {\huge \textbf{souris}}
+\vspace{0.25cm}\\
+\begin{tabulary}{17cm}{|h|h|h|h|h|}
+\hline
+souris & débris & couver & sou & digne \\
+\hline
+poutre & souris & souiller & souple & sourire \\
+\hline
+soupe & consacrer & étourdi & horrible & souris \\
+\hline
+couloir & sourire & écrivain & perdrix & souris \\
+\hline
+défunt & enrichir & souris & journée & talent \\
+\hline
+\end{tabulary}
+\end{center}
+\vspace{0.5cm}
+
+        % Cursive
+\large\noindent En cursive :
+\begin{center}
+{\huge \textbf {{\cursive souris}}}
+\vspace{0.25cm}\\
+\begin{tabulary}{17cm}{|i|i|i|i|i|}
+\hline
+wagon & cerisier & souffrir & soulier & souris \\
+\hline
+verdure & souris & course & souvenir & perdrix \\
+\hline
+faire & noble & soupe & souris & céleste \\
+\hline
+trois & étang & bise & souris & outre \\
+\hline
+enfouir & source & octobre & souris & splendeur \\
+\hline
+\end{tabulary}
+\end{center}
+
+% Fin du document
+\end{onehalfspace}
+\end{document}
