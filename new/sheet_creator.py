@@ -1,93 +1,19 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-"""Module docstring."""
+"""Sheet Creator X."""
+
+from params import *
 
 import sys
-
+import os
+import subprocess
+from random import randint, random, choice, choices
 from PyQt5.QtCore import pyqtSignal, pyqtSlot
 from PyQt5.QtWidgets import QWidget, QApplication
 from ui.sheet_creator_master_ui import Ui_master
-from os import path
+
 import webbrowser
-
-ENC = "utf8"
-
-WORD_NB_WARNING_THRESHOLD = 25
-
-DEFAULT_REF_WORD = "Cochon"
-DEFAULT_CAPITAL_ENABLED = False
-DEFAULT_SCRIPT_ENABLED = True
-DEFAULT_CURSIVE_ENABLED = False
-DEFAULT_LINES = 5
-DEFAULT_REF_WORD_NUMBER = 1
-DEFAULT_REF_WORD_PROB = 0.80
-DEFAULT_VERY_CLOSE_PROB = 0.40
-DEFAULT_CLOSE_PROB = 0.40
-# NO DEFAULT_OTHER_PROB
-
-DEFAULT_ADVANCED_SETTINGS_ENABLED = False
-DEFAULT_VERY_CLOSE_STARTEND3_ENABLED = False
-DEFAULT_VERY_CLOSE_STARTEND2_ENABLED = False
-DEFAULT_VERY_CLOSE_FOLLOWING4_ENABLED = False
-DEFAULT_VERY_CLOSE_FOLLOWING3_ENABLED = True
-DEFAULT_VERY_CLOSE_INDEP3_ENABLED = False
-
-DEFAULT_CLOSE_STARTEND2_ENABLED = False
-DEFAULT_CLOSE_FOLLOWING3_ENABLED = False
-DEFAULT_CLOSE_FOLLOWING2_ENABLED = True
-DEFAULT_CLOSE_INDEP3_ENABLED = False
-DEFAULT_CLOSE_INDEP2_ENABLED = False
-
-OUTPUT_DIRECTORY = "./output"
-OUTPUT_TEX_FILE_FORMAT = "feuille_{}.tex"
-OUTPUT_SUBDIR_FORMAT = "feuille_{}"
-RESOURCE_DIRECTORY = "./resources"
-HELP_DIRECTORY = path.join(RESOURCE_DIRECTORY, "help")
-HELP_FILE = "./aide.pdf"
-HELP_PATH = path.join(
-    HELP_DIRECTORY, HELP_FILE)
-WORD_LIST_DIRECTORY = path.join(RESOURCE_DIRECTORY, "word_lists")
-DEFAULT_WORD_LIST_FILE = "liste_mots.txt"
-DEFAULT_WORD_LIST_PATH = path.join(
-    WORD_LIST_DIRECTORY, DEFAULT_WORD_LIST_FILE)
-TEMPLATE_DIRECTORY = path.join(RESOURCE_DIRECTORY, "template")
-TEMPLATE_FILE = "template.tex"
-TEMPLATE_PATH = path.join(TEMPLATE_DIRECTORY, TEMPLATE_FILE)
-TEMPLATE_FIELDS = ["%%%REF_WORD%%%", "%%%CONTENT%%%"]
-
-# Checks that the default word list is avaible
-if not path.isfile(DEFAULT_WORD_LIST_PATH):
-    print("Default word list is not avaible. The app will shutdown...")
-    sys.exit(1)
-DEFAULT_WORD_LIST_OK_ENABLED = True
-
-# Checks that the template tex file is avaible
-if not path.isfile(TEMPLATE_FILE):
-    print("Template TeX file is not avaible. The app will shutdown...")
-    sys.exit(2)
-with open(TEMPLATE_PATH, "r", encoding=ENC) as template_file:
-    for field in TEMPLATE_FIELDS:
-        if not field in template_file.read():
-            print("Template TeX file is not valid. The app will shutdown...")
-            sys.exit(3)
-
-# Only handles ASCII chars at the moment
-ASCII_IDS = list(range(0, 127 + 1))
-ALLOWED_ASCII_IDS = (
-    [45] +
-    list(range(65, 90 + 1)) +
-    list(range(97, 122 + 1))
-)
-
-DEBUG_LEVEL = 2
-FANCY_LEVELS = {
-    0: "E",
-    1: "W",
-    2: "I",
-    3: "L"
-}
-DEBUG_CONSOLE = True
 
 def normalize(string):
     """Returns a normalized version of the string."""
@@ -382,6 +308,7 @@ class SheetGenerator(object):
         self.rw = normalize_word(self.p["rrw"])
         self.vc_list = []
         self.c_list = []
+        self.other_list = []
 
     def create_lists(self):
         """Creates lists of very close and close words."""
@@ -395,6 +322,8 @@ class SheetGenerator(object):
                     self.vc_list.append(raw_word)
                 if self.is_close(word):
                     self.c_list.append(raw_word)
+                if True:
+                    self.other_list.append(raw_word)
                 raw_word = normalize_line(word_list_file.readline())
 
     def is_very_close(self, word):
@@ -464,10 +393,95 @@ class SheetGenerator(object):
             self.state_msg.emit(
                 1, "Very few very close words found: {}"
                 .format(len(self.vc_list)))
+        else:
+            self.state_msg.emit(
+                2, "Very close words found: {}".format(len(self.vc_list)))
         if len(self.c_list) < WORD_NB_WARNING_THRESHOLD:
             self.state_msg.emit(
                 1, "Very few close words found: {}".format(len(self.c_list)))
-        
+        else:
+            self.state_msg.emit(
+                1, "Close words found: {}".format(len(self.c_list)))
+        try:
+            self.create_tex_file()
+        except Exception as e:
+            self.state_msg.emit(
+                0, "Unable to create the TeX file: <{}>".format(e))
+        try:
+            self.compile_tex_file()
+        except Exception as e:
+            self.state_msg.emit(
+                0, "Unable to compile the TeX file: <{}>".format(e))
+        try:
+            self.display_pdf_file()
+        except Exception as e:
+            self.state_msg.emit(
+                1, "Unable to display the PDF file: <{}>".format(e))
+
+    def get_random_word(self):
+        """Returns a random word according to the defined probs."""
+        r = random()
+        if r < self.p["vc_prob"]:
+            return choice(self.vc_list)
+        elif r < self.p["vc_prob"] + self.p["c_prob"]:
+            return choice(self.c_list)
+        else:
+            return choice(self.other_list)
+
+    def produce_tab(self, template_path):
+        """Produces a tab according to the specified template."""
+        with open(template_path, "r", encoding=ENC) as template_file:
+            template = template_file.read()
+        tab_lines = []
+        for _ in range(self.p["lines"]):
+            words = []
+            index_where_ref_word = choices(list(range(5)), self.p["rw_number"])
+            for i in range(5):
+                if i in index_where_ref_word and random() < self.p["rw_prob"]:
+                    words.append(self.p["rrw"])
+                else:
+                    words.append(self.get_random_word())
+            tab_lines.append(" & ".join(words))
+        tab_lines.append("")
+        content = "\\\\\\hline".join(tab_lines)
+        template.replace(TEMPLATE_FIELDS[0], self.p["rrw"])
+        template.replace(TEMPLATE_FIELDS[1], content)
+        return template
+
+    def produce_content(self):
+        """Produces tabs according to the settings."""
+        tabs = []
+        tabs.append(self.produce_tab(TEMPLATE_CAPITAL_PATH))
+        tabs.append(self.produce_tab(TEMPLATE_SCRIPT_PATH))
+        tabs.append(self.produce_tab(TEMPLATE_CURSIVE_PATH))
+        return "\n".join(tabs)
+
+    def create_tex_file(self):
+        """Creates the TeX file."""
+        output_dir = os.path.join(
+            OUTPUT_DIRECTORY,
+            OUTPUT_SUBDIR_FORMAT.format(self.rw))
+        if not os.path.isdir(output_dir):
+            os.mkdir(output_dir)
+        output_tex_path = os.path.join(
+            output_dir,
+            OUTPUT_TEX_FILE_FORMAT.format(self.rw))
+        self.output_tex_path = output_tex_path
+        with open(TEMPLATE_MAIN_PATH, "r", encoding=ENC) as template_file:
+            template = template_file.read()
+        template.replace(TEMPLATE_FIELDS[0], self.p["rrw"])
+        template.replace(TEMPLATE_FIELDS[1], self.produce_content())
+        with open(output_tex_path, "w", encoding=ENC) as output_tex_file:
+            output_tex_file.write(template)
+    
+    def compile_tex_file(self):
+        """Compiles the TeX file."""
+        # Can't work with checkoutput
+        pass
+
+    def display_pdf_file(self):
+        """Displays the PDF file."""
+        pass
 
 def main():
     """Launcher."""
