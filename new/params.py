@@ -34,12 +34,13 @@ DEFAULT_CLOSE_FOLLOWING2_ENABLED = True
 DEFAULT_CLOSE_INDEP3_ENABLED = False
 DEFAULT_CLOSE_INDEP2_ENABLED = False
 
-OUTPUT_DIRECTORY = "./output"
+OUTPUT_DIRECTORY = path.abspath("./output")
 OUTPUT_TEX_FILE_FORMAT = "feuille_{}.tex"
+OUTPUT_PDF_FILE_FORMAT = "feuille_{}.pdf"
 OUTPUT_SUBDIR_FORMAT = "feuille_{}"
-RESOURCE_DIRECTORY = "./resources"
+RESOURCE_DIRECTORY = path.abspath("./resources")
 HELP_DIRECTORY = path.join(RESOURCE_DIRECTORY, "help")
-HELP_FILE = "./aide.pdf"
+HELP_FILE = "aide.pdf"
 HELP_PATH = path.join(
     HELP_DIRECTORY, HELP_FILE)
 WORD_LIST_DIRECTORY = path.join(RESOURCE_DIRECTORY, "word_lists")
@@ -94,9 +95,9 @@ ALLOWED_ASCII_IDS = (
 
 DEBUG_LEVEL = 2
 FANCY_LEVELS = {
-    0: "E",
-    1: "W",
-    2: "I",
-    3: "L"
+    0: "<font color='red'>[E]</font>",
+    1: "<font color='orange'>[W]</font>",
+    2: "<font color='green'>[I]</font>",
+    3: "<font color='gray'>[L]</font>"
 }
 DEBUG_CONSOLE = True

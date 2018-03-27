@@ -1,12 +1,12 @@
 {\large
-\noindent En script :
+\noindent En cursive :
 
 \begin{center}
-    {\huge \bfseries
+    {\huge \bfseries {\cursive
         %%%REF_WORD%%%
-    }
+    }}
     \vspace{0.25cm}\\
-    \begin{tabulary}{17cm}{|h|h|h|h|h|}
+    \begin{tabulary}{17cm}{|i|i|i|i|i|}
     \hline
 
     %%%CONTENT%%%
@@ -14,4 +14,3 @@
     \end{tabulary}
 \end{center}
 }
-\vspace{0.5cm}

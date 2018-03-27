@@ -9,9 +9,12 @@ import sys
 import os
 import subprocess
 from random import randint, random, choice, choices
-from PyQt5.QtCore import pyqtSignal, pyqtSlot
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, QObject
 from PyQt5.QtWidgets import QWidget, QApplication
 from ui.sheet_creator_master_ui import Ui_master
+
+# TODO: Erreur sur la creation des listes de mots
+# TODO: Erreur sur le replace
 
 import webbrowser
 
@@ -54,52 +57,57 @@ class SheetCreatorUiMaster(Ui_master, QWidget):
 
         self.put_default_settings()
 
+    @pyqtSlot()
+    def on_pushbutton_generate_clicked(self):
+        """When the generate button is clicked."""
+        self.generate()
+
     @pyqtSlot(int)
     def on_checkbox_vc_startend3_stateChanged(self, _):
         """When the very close startend3 criteria is enabled/disabled."""
-        self.update_very_close_status()
+        self.update_status()
     @pyqtSlot(int)
     def on_checkbox_vc_startend2_stateChanged(self, _):
         """When the very close startend2 criteria is enabled/disabled."""
-        self.update_very_close_status()
+        self.update_status()
     @pyqtSlot(int)
     def on_checkbox_vc_following4_stateChanged(self, _):
         """When the very close following4 criteria is enabled/disabled."""
-        self.update_very_close_status()
+        self.update_status()
     @pyqtSlot(int)
     def on_checkbox_vc_following3_stateChanged(self, _):
         """When the very close following3 criteria is enabled/disabled."""
-        self.update_very_close_status()
+        self.update_status()
     @pyqtSlot(int)
     def on_checkbox_vc_indep3_stateChanged(self, _):
         """When the very close indep3 criteria is enabled/disabled."""
-        self.update_very_close_status()
+        self.update_status()
 
     @pyqtSlot(int)
     def on_checkbox_c_startend2_stateChanged(self, _):
         """When the close startend2 criteria is enabled/disabled."""
-        self.update_close_status()
+        self.update_status()
     @pyqtSlot(int)
     def on_checkbox_c_following3_stateChanged(self, _):
         """When the close following3 criteria is enabled/disabled."""
-        self.update_close_status()
+        self.update_status()
     @pyqtSlot(int)
     def on_checkbox_c_following2_stateChanged(self, _):
         """When the close following2 criteria is enabled/disabled."""
-        self.update_close_status()
+        self.update_status()
     @pyqtSlot(int)
     def on_checkbox_c_indep3_stateChanged(self, _):
         """When the close indep3 criteria is enabled/disabled."""
-        self.update_close_status()
+        self.update_status()
     @pyqtSlot(int)
     def on_checkbox_c_indep2_stateChanged(self, _):
         """When the close indep2 criteria is enabled/disabled."""
-        self.update_close_status()
+        self.update_status()
 
     @pyqtSlot(str)
     def on_lineedit_ref_word_textEdited(self, _):
         """When the ref word is changed."""
-        self.update_ref_word_status()
+        self.update_status()
 
     @pyqtSlot(int)
     def on_checkbox_advanced_settings_stateChanged(self, _):
@@ -115,7 +123,7 @@ class SheetCreatorUiMaster(Ui_master, QWidget):
     @pyqtSlot(str)
     def on_lineedit_word_list_textEdited(self, _):
         """When the word list is changed."""
-        self.update_word_list_status()
+        self.update_status()
 
     @pyqtSlot(float)
     def on_spinbox_ows_very_close_valueChanged(self, _):
@@ -140,7 +148,6 @@ class SheetCreatorUiMaster(Ui_master, QWidget):
     def put_default_settings(self):
         """Reset the interface with default settings."""
         self.lineedit_ref_word.setText(DEFAULT_REF_WORD)
-        self.update_ref_word_status()
         self.checkbox_capital.setChecked(DEFAULT_CAPITAL_ENABLED)
         self.checkbox_script.setChecked(DEFAULT_SCRIPT_ENABLED)
         self.checkbox_cursive.setChecked(DEFAULT_CURSIVE_ENABLED)
@@ -174,7 +181,7 @@ class SheetCreatorUiMaster(Ui_master, QWidget):
             DEFAULT_CLOSE_INDEP2_ENABLED)
 
         self.lineedit_word_list.setText(DEFAULT_WORD_LIST_FILE)
-        self.update_word_list_status()
+        self.update_status()
 
         self.checkbox_advanced_settings.setChecked(
             DEFAULT_ADVANCED_SETTINGS_ENABLED)
@@ -196,16 +203,11 @@ class SheetCreatorUiMaster(Ui_master, QWidget):
         self.lineedit_word_list.setText(word_list_file)
         return path.join(WORD_LIST_DIRECTORY, word_list_file)
 
-    def update_word_list_status(self):
-        """Updates status of the radiobutton which indicates wether the
-        specified word list file is valid or not."""
+    def get_word_list_status(self):
+        """Is the word list constraint ok?."""
         word_list_ok = path.isfile(self.get_word_list_path())
-        if word_list_ok:
-            self.radiobutton_word_list_ok.setChecked(True)
-            self.pushbutton_generate.setEnabled(True)
-        else:
-            self.radiobutton_word_list_ok.setChecked(False)
-            self.pushbutton_generate.setEnabled(False)
+        self.radiobutton_word_list_ok.setChecked(word_list_ok)
+        return word_list_ok
 
     def get_raw_ref_word(self):
         """Returns the ref word."""
@@ -213,36 +215,37 @@ class SheetCreatorUiMaster(Ui_master, QWidget):
         self.lineedit_ref_word.setText(raw_ref_word)
         return raw_ref_word
 
-    def update_ref_word_status(self):
-        """Desactivates the generate button if the specified ref word is
-        invalid."""
+    def get_ref_word_status(self):
+        """Is the constraint on the ref word ok?"""
         raw_ref_word = self.get_raw_ref_word()
-        if is_correct_word(raw_ref_word):
-            self.pushbutton_generate.setEnabled(True)
-        else:
-            self.pushbutton_generate.setEnabled(False)
+        return is_correct_word(raw_ref_word)
 
-    def update_very_close_status(self):
-        """Desactivates the generate button if no criteria is checked."""
-        if (self.checkbox_vc_startend3.isChecked() or
+    def get_very_close_status(self):
+        """Is the constraint on the very close parmams ok?."""
+        return (
+            self.checkbox_vc_startend3.isChecked() or
             self.checkbox_vc_startend2.isChecked() or
             self.checkbox_vc_following4.isChecked() or
             self.checkbox_vc_following3.isChecked() or
-            self.checkbox_vc_indep3.isChecked()):
-            self.pushbutton_generate.setEnabled(True)
-        else:
-            self.pushbutton_generate.setEnabled(False)
+            self.checkbox_vc_indep3.isChecked())
 
-    def update_close_status(self):
-        """Desactivates the generate button if no criteria is checked."""
-        if (self.checkbox_c_startend2.isChecked() or
+    def update_status(self):
+        """Desactivates the generate button if at least one constraint is not
+        ok."""
+        self.pushbutton_generate.setEnabled(
+            self.get_word_list_status() and
+            self.get_ref_word_status() and
+            self.get_very_close_status() and
+            self.get_close_status())
+
+    def get_close_status(self):
+        """Is the constraint on the close params ok?."""
+        return (
+            self.checkbox_c_startend2.isChecked() or
             self.checkbox_c_following3.isChecked() or
             self.checkbox_c_following2.isChecked() or
             self.checkbox_c_indep3.isChecked() or
-            self.checkbox_c_indep2.isChecked()):
-            self.pushbutton_generate.setEnabled(True)
-        else:
-            self.pushbutton_generate.setEnabled(False)
+            self.checkbox_c_indep2.isChecked())
 
     def set_advanced_settings_state(self, state):
         """Activates or desactivates the advanced settings panel."""
@@ -286,19 +289,26 @@ class SheetCreatorUiMaster(Ui_master, QWidget):
         }
         return p
 
+    @pyqtSlot(int, str)
     def state_msg(self, level, msg):
         """Prints the specified message in the state text box."""
-        if level >= DEBUG_LEVEL:
-            fancy_msg = "[{}] {}\n".format(FANCY_LEVELS[level], msg)
+        if level <= DEBUG_LEVEL:
+            fancy_msg = "{} {}".format(FANCY_LEVELS[level], msg)
             self.textbrowser_state_info.append(fancy_msg)
             if DEBUG_CONSOLE:
                 print(fancy_msg)
 
-class SheetGenerator(object):
+    def generate(self):
+        """Generates the PDF file and opens it."""
+        sheet_generator = SheetGenerator(self.get_params())
+        sheet_generator.state_msg.connect(self.state_msg)
+        sheet_generator.generate()
+
+class SheetGenerator(QObject):
     """Instance of a sheet generator. Handles the logic to generate the pdf
     file."""
 
-    state_msg = pyqtSignal(int, str, name="state_msg")
+    state_msg = pyqtSignal(int, str)
 
     def __init__(self, p):
         """Init method."""
@@ -401,7 +411,7 @@ class SheetGenerator(object):
                 1, "Very few close words found: {}".format(len(self.c_list)))
         else:
             self.state_msg.emit(
-                1, "Close words found: {}".format(len(self.c_list)))
+                2, "Close words found: {}".format(len(self.c_list)))
         try:
             self.create_tex_file()
         except Exception as e:
@@ -435,25 +445,29 @@ class SheetGenerator(object):
         tab_lines = []
         for _ in range(self.p["lines"]):
             words = []
-            index_where_ref_word = choices(list(range(5)), self.p["rw_number"])
+            index_where_ref_word = choices(
+                list(range(5)), k=self.p["rw_number"])
             for i in range(5):
                 if i in index_where_ref_word and random() < self.p["rw_prob"]:
-                    words.append(self.p["rrw"])
+                    words.append(self.rw)
                 else:
                     words.append(self.get_random_word())
             tab_lines.append(" & ".join(words))
         tab_lines.append("")
-        content = "\\\\\\hline".join(tab_lines)
-        template.replace(TEMPLATE_FIELDS[0], self.p["rrw"])
-        template.replace(TEMPLATE_FIELDS[1], content)
+        content = "\\\\\\hline\n".join(tab_lines)
+        template = template.replace(TEMPLATE_FIELDS[0], self.rw)
+        template = template.replace(TEMPLATE_FIELDS[1], content)
         return template
 
     def produce_content(self):
         """Produces tabs according to the settings."""
         tabs = []
-        tabs.append(self.produce_tab(TEMPLATE_CAPITAL_PATH))
-        tabs.append(self.produce_tab(TEMPLATE_SCRIPT_PATH))
-        tabs.append(self.produce_tab(TEMPLATE_CURSIVE_PATH))
+        if self.p["capital"]:
+            tabs.append(self.produce_tab(TEMPLATE_CAPITAL_PATH))
+        if self.p["script"]:
+            tabs.append(self.produce_tab(TEMPLATE_SCRIPT_PATH))
+        if self.p["cursive"]:
+            tabs.append(self.produce_tab(TEMPLATE_CURSIVE_PATH))
         return "\n".join(tabs)
 
     def create_tex_file(self):
@@ -463,25 +477,35 @@ class SheetGenerator(object):
             OUTPUT_SUBDIR_FORMAT.format(self.rw))
         if not os.path.isdir(output_dir):
             os.mkdir(output_dir)
+        self.output_dir = output_dir
+        output_tex_file = OUTPUT_TEX_FILE_FORMAT.format(self.rw)
+        self.output_tex_file = output_tex_file
         output_tex_path = os.path.join(
             output_dir,
-            OUTPUT_TEX_FILE_FORMAT.format(self.rw))
-        self.output_tex_path = output_tex_path
+            output_tex_file)
+        output_pdf_path = os.path.join(
+            output_dir,
+            OUTPUT_PDF_FILE_FORMAT.format(self.rw))
+        self.output_pdf_path = output_pdf_path
         with open(TEMPLATE_MAIN_PATH, "r", encoding=ENC) as template_file:
             template = template_file.read()
-        template.replace(TEMPLATE_FIELDS[0], self.p["rrw"])
-        template.replace(TEMPLATE_FIELDS[1], self.produce_content())
+        template = template.replace(TEMPLATE_FIELDS[0], self.rw)
+        template = template.replace(TEMPLATE_FIELDS[1], self.produce_content())
         with open(output_tex_path, "w", encoding=ENC) as output_tex_file:
             output_tex_file.write(template)
     
     def compile_tex_file(self):
         """Compiles the TeX file."""
-        # Can't work with checkoutput
-        pass
+        os.chdir(self.output_dir)
+        result = subprocess.run(
+            [TEX_COMPILE_CMD] + TEX_COMPILE_ARGS + [self.output_tex_file],
+            stderr=subprocess.PIPE)
+        if result.returncode != 0:
+            raise Exception(result.stderr)
 
     def display_pdf_file(self):
         """Displays the PDF file."""
-        pass
+        webbrowser.open(self.output_pdf_path)
 
 def main():
     """Launcher."""
