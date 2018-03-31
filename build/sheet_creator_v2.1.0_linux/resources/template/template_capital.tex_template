@@ -1,0 +1,17 @@
+{\large
+\noindent En capitale :
+
+\begin{center}
+    {\huge \bfseries \MakeUppercase{
+        %%%REF_WORD%%%
+    }}
+    \vspace{0.25cm}\\
+    \begin{tabulary}{17cm}{|g|g|g|g|g|}
+    \hline
+
+    %%%CONTENT%%%
+
+    \end{tabulary}
+\end{center}
+}
+\vspace{0.5cm}
